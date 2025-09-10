@@ -1,4 +1,4 @@
 *.pkl
-modules/__pycache__/
-modules/dataset/
 dataset/
+common/__pycache__
+*.pyc

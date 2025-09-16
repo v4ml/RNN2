@@ -27,3 +27,5 @@ xs = np.random.randint(0, vocab_size-1, size=(20, 5))
 xs[0,0] = 0
 xs[1,0] = 1
 model.forward(xs)
+dout = np.ones((20, 5, wordvec_size), dtype='float64')
+model.backward(dout)

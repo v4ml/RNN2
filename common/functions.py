@@ -6,6 +6,11 @@ from common.np import *
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
+def sigmoid_derivative(sig):
+    return sig * (1 - sig)
+
+def tanh_derivative(tanh_val):
+    return 1 - tanh_val**2
 
 def relu(x):
     return np.maximum(0, x)

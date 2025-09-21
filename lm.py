@@ -6,7 +6,7 @@ from common.layers import *
 from layer import *
 
 class Lm:
-    def __init__(self, vocab_size, wordvec_size, hidden_size):
+    def __init__(self, vocab_size, wordvec_size, hidden_size, batch_size, time_size):
         V, D, H = vocab_size, wordvec_size, hidden_size
 
         embed_W = (np.random.randn(V, D)/100).astype('f')
@@ -16,7 +16,7 @@ class Lm:
 
         self.layers = [
             TimeEmbedding(embed_W),
-            TimeLSTM(LSTM_Wx, LSTM_Wh, LSTM_b)
+            TimeLSTM(LSTM_Wx, LSTM_Wh, LSTM_b, batch_size, time_size)
         ]
 
     def forward(self, xs):

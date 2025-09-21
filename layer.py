@@ -27,7 +27,7 @@ class TimeEmbedding:
 
         return wordvecs
 
-    def backward(self, dout):
+    def backward(self, dW):
         # dout : N, T, D
         # dout = dloss/dwordvecs
         # ? = dwordvecs/dW = 
@@ -36,11 +36,11 @@ class TimeEmbedding:
         N, T = xs.shape
         V, D = W.shape
         
-        dW = np.zeros((V, D), dtype='float64')
+        dWs = np.zeros((V, D), dtype='float64')
         for t in range(T):
-            dW[xs[:, t], :] += dout[:, t, :]
+            dWs[xs[:, t], :] += dW[:, t, :]
 
-        self.grads= [dW]
+        self.grads= [dWs]
 
 
 class LSTM:
@@ -54,6 +54,7 @@ class LSTM:
     
     def forward(self, x, prev_h, prev_c):
         Wx, Wh, b = self.params
+        self.x, self.prev_h, self.prev_c  = x, prev_h, prev_c
         D, H = Wx.shape
         H = H/4
 
@@ -67,7 +68,7 @@ class LSTM:
         next_c = f*prev_c + g*i
         next_h = np.tanh(next_c)*o
         self.next_h, self.next_c = next_h, next_c
-        self.x, self.prev_h, self.prev_c  = x, prev_h, prev_c
+        
         self.A = np.concatenate((f, g, i, o), axis=1)
         
         return next_h, next_c
@@ -88,18 +89,28 @@ class LSTM:
         dWx = np.concatenate((np.dot(self.x.T, sigmoid_derivative(f)), np.dot(self.x.T, tanh_derivative(g)), np.dot(self.x.T, sigmoid_derivative(i)), np.dot(self.x.T, sigmoid_derivative(o))), axis=1)
         #dWh = np.dot(self.h.T, sigmoid_derivative(f)) + np.dot(self.h.T, tanh_derivative(g)) + np.dot(self.h.T, sigmoid_derivative(i)) + np.dot(self.h.T, sigmoid_derivative(o))
         dWh = np.concatenate((np.dot(self.prev_h.T, sigmoid_derivative(f)), np.dot(self.prev_h.T, tanh_derivative(g)), np.dot(self.prev_h.T, sigmoid_derivative(i)), np.dot(self.prev_h.T, sigmoid_derivative(o))), axis=1)
-        self.grads = [dWx, dWh, b]
-        self.grads = [dWx, dWh, b]
+        db = np.concatenate((df, dg, di, do), axis=1)
+        db = np.sum(db, axis=0)
+        self.grads = [dWx, dWh, db]
+        self.dx = dx
 
-        return dx
+        return dh
         
 
 class TimeLSTM:
-    def __init__(self, Wx, Wh, b, stateful = True):
+    def __init__(self, Wx, Wh, b, batch_size, time_size, stateful = True):
         self.params = [Wx, Wh, b]
         self.grads = []
         self.stateful = stateful
-        N,H = 20, 15
+        D, H = Wx.shape
+        H = H//4
+        N, T = batch_size, time_size
+    
+    
+        self.prev_h = np.zeros((N, H), dtype='float64')
+        self.prev_c = np.zeros((N, H), dtype='float64')
+        self.hs = np.zeros((N, T, H), dtype='float64')
+        self.cs = np.zeros((N, T, H), dtype='float64')        
         self.dh = np.ones((N, H), dtype='float64')
         self.dc = np.ones((N, H), dtype='float64')
 
@@ -107,37 +118,41 @@ class TimeLSTM:
         Wx, Wh, b = self.params
         N, T, D = xs.shape
         H, _ = Wh.shape
-        self.prev_h = np.zeros((N, H), dtype='float64')
-        self.prev_c = np.zeros((N, H), dtype='float64')
-        
-
 
         self.layers = []
         for t in range(T):
             layer = LSTM(Wx, Wh, b)
             self.prev_h, self.prev_c = layer.forward(xs[:, t, :], self.prev_h, self.prev_c)
             self.layers.append(layer)
-        return self.prev_h # N, H
+            self.hs[:, t, :] = self.prev_h
+            self.cs[:, t, :] = self.prev_c
+
+        return self.hs # N, T, H
     
-    def backward(self, dout):
+    def backward(self, dhs):
         Wx, Wh, b = self.params
-        N, H = dout.shape
-        _, D = Wx.shape
-
-
+        N, T, H = dhs.shape
+        D, H = Wx.shape
 
         if(self.stateful):
             dh = self.dh
             dc = self.dc
 
-
-        dh = dout + dh
-        dc = dc
-        dxs = np.empty((N, len(self.layers), D//4), dtype='float64')
+        #dhs = np.empty((N, len(self.layers), H//4), dtype='float64')
+        dcs = np.empty((N, len(self.layers), H//4), dtype='float64')
+        dxs = np.empty((N, len(self.layers), D), dtype='float64')
+        dWxs = np.zeros((D, H), dtype='float64')
+        dWhs = np.zeros((H//4, H), dtype='float64')
+        dbs = np.zeros((H), dtype='float64')
         for t, layer in enumerate(reversed(self.layers)):
-            dx = layer.backward(dh, dc)
-            dxs[:, t, :] = dx
-
+            dh = dhs[:, t, :] + dh
+            dh = layer.backward(dh, dc)
+            dxs[:, t, :] = layer.dx
+            dhs[:, t, :] = dh
+            dcs[:, t, :] = dc
+            dWxs += layer.grads[0]
+            dWhs += layer.grads[1]
+            dbs += layer.grads[2]
         self.dh = dh
         self.dc = dc
 

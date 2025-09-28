@@ -42,7 +42,7 @@ class Trainer:
         #         batch_x[i, t] = xs[(self.time_idx +offset)%data_size]
         #         batch_y[i, t] = ts[(self.time_idx +offset)%data_size]
         #     self.time_idx += 1
-        return batch_x, batch_y
+
 
     def fit(self, xs, ts, max_epoch=10, batch_size=32, time_size=20, max_grad=None, eval_interval=20):
         total_loss = 0

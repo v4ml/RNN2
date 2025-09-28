@@ -12,10 +12,10 @@ class Lm:
         V, D, H = vocab_size, wordvec_size, hidden_size
 
         embed_W = (np.random.randn(V, D)/100).astype('f')
-        LSTM_Wx = (np.random.randn(D, 4*H)/np.sqrt(H)).astype('f')
+        LSTM_Wx = (np.random.randn(D, 4*H)/np.sqrt(D)).astype('f')
         LSTM_Wh = (np.random.randn(H, 4*H)/np.sqrt(H)).astype('f')
         LSTM_b = np.zeros(H*4).astype('f')
-        Affine_W = (np.random.randn(H, V)/np.sqrt(V)).astype('f')
+        Affine_W = (np.random.randn(H, V)/np.sqrt(H)).astype('f')
         Affine_b = np.zeros(V).astype('f')
 
         self.layers = [

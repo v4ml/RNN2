@@ -39,6 +39,7 @@ class TimeEmbedding:
         
         dWs = np.zeros((V, D), dtype='float32')
         for t in range(T):
+            print(xs[:, t])
             dWs[xs[:, t], :] += dW[:, t, :]
 
         self.grads= [dWs]

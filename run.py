@@ -15,9 +15,9 @@ from common.optimizer import SGD
 corpus, word_to_id, id_to_word = ptb.load_data('train')
 corpus_test, word_to_id_test, id_to_word_test = ptb.load_data('test')
 
-#corpus = corpus[:1001]
+corpus = corpus[:1001]
 vocab_size = len(word_to_id) 
-vocab_size = int(max(corpus))+1
+#vocab_size = int(max(corpus))+1
 wordvec_size = 650
 hidden_size = 650
 time_size = 35
@@ -25,7 +25,17 @@ batch_size = 20
 max_epoch = 40
 max_grad = 0.25
 lr = 20.0
-                                                                                        
+
+
+# vocab_size = len(word_to_id) 
+# vocab_size = int(max(corpus))+1
+# wordvec_size = 650
+# hidden_size = 650
+# time_size = 35
+# batch_size = 20
+# max_epoch = 40
+# max_grad = 0.25
+# lr = 20.0                                                                      
 
 
 

@@ -58,6 +58,8 @@ class Trainer:
                 batch_x, batch_y = self.get_batch(xs, ts, start_idx, batch_size, time_size)
                 loss = self.model.forward(batch_x, batch_y)
                 self.model.backward()
+                params, grads = self.remove_duplicate(self.model.params, self.model.grads)
+
                 if max_grad is not None:
                     self.clip_grads(self.model.grads, max_grad)
                 self.optimizer.update(self.model.params, self.model.grads)
@@ -92,6 +94,40 @@ class Trainer:
 
         rate = max_norm / (total_norm + 1e-6)
         if rate < 1:
-            print('=================== clip')
             for grad in grads:
-                grad *= rate        
+                grad *= rate
+
+
+    def remove_duplicate(self, params, grads):
+        '''
+        매개변수 배열 중 중복되는 가중치를 하나로 모아
+        그 가중치에 대응하는 기울기를 더한다.
+        '''
+        params, grads = params[:], grads[:]  # copy list
+
+        while True:
+            find_flg = False
+            L = len(params)
+
+            for i in range(0, L - 1):
+                for j in range(i + 1, L):
+                    # 가중치 공유 시
+                    if params[i] is params[j]:
+                        grads[i] += grads[j]  # 경사를 더함
+                        find_flg = True
+                        params.pop(j)
+                        grads.pop(j)
+                    # 가중치를 전치행렬로 공유하는 경우(weight tying)
+                    elif params[i].ndim == 2 and params[j].ndim == 2 and \
+                        params[i].T.shape == params[j].shape and np.all(params[i].T == params[j]):
+                        grads[i] += grads[j].T
+                        find_flg = True
+                        params.pop(j)
+                        grads.pop(j)
+
+                    if find_flg: break
+                if find_flg: break
+
+            if not find_flg: break
+
+        return params, grads

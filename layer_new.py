@@ -537,3 +537,22 @@ class TimeSoftmaxWithLoss:
         return dloss/(N*T)
 
 
+class TimeDropout:
+    def __init__(self, dropout_ratio=0.5):
+        self.params, self.grads = [], []
+        self.dropout_ratio = dropout_ratio
+        self.mask = None
+
+    def forward(self, xs):
+        flg = np.random.rand(*xs.shape) > self.dropout_ratio
+        scale = 1/(1.0-self.dropout_ratio)
+        self.mask = flg.astype(np.float32)*scale
+
+        return xs*self.mask
+
+    def backward(self, dxs):
+        return dxs*self.mask
+
+
+
+

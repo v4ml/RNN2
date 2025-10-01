@@ -18,7 +18,7 @@ class TimeEmbedding:
         V, D = W.shape
         N, T = xs.shape
 
-        wordvecs = np.zeros((N, T, D), dtype='float32')
+        wordvecs = np.zeros((N, T, D), dtype='f')
         for t in range(T):
             #print(xs[:, t])
             a = W[xs[:, t], :]
@@ -37,7 +37,7 @@ class TimeEmbedding:
         N, T = xs.shape
         V, D = W.shape
         
-        dWs = np.zeros((V, D), dtype='float32')
+        dWs = np.zeros((V, D), dtype='f')
         for t in range(T):
             #print(xs[:, t])
             dWs[xs[:, t], :] += dW[:, t, :]
@@ -51,8 +51,8 @@ class LSTM:
         self.grads = [np.zeros_like(Wx), np.zeros_like(Wh), np.zeros_like(b)]
         self.cache = []
         H, _ = Wh.shape
-        #prev_h = np.zeros((H, H), dtype='float32')
-        #prev_c = np.zeros((H, H), dtype='float32')
+        #prev_h = np.zeros((H, H), dtype='f')
+        #prev_c = np.zeros((H, H), dtype='f')
 
     
     def forward(self, x, prev_h, prev_c):
@@ -122,18 +122,18 @@ class TimeLSTM:
         H = H//4
         N, T = batch_size, time_size
     
-        self.dh = np.ones((N, H), dtype='float32')
-        self.dc = np.ones((N, H), dtype='float32')
+        self.dh = np.ones((N, H), dtype='f')
+        self.dc = np.ones((N, H), dtype='f')
 
     def forward(self, xs):
         Wx, Wh, b = self.params
         N, T, D = xs.shape
         H, _ = Wh.shape
 
-        prev_h = np.zeros((N, H), dtype='float32')
-        prev_c = np.zeros((N, H), dtype='float32')
-        hs = np.zeros((N, T, H), dtype='float32')
-        cs = np.zeros((N, T, H), dtype='float32')  
+        prev_h = np.zeros((N, H), dtype='f')
+        prev_c = np.zeros((N, H), dtype='f')
+        hs = np.zeros((N, T, H), dtype='f')
+        cs = np.zeros((N, T, H), dtype='f')  
         
         self.layers = []
         
@@ -156,15 +156,15 @@ class TimeLSTM:
             dh = self.dh
             dc = self.dc
         else:
-            dh = np.ones((N, H), dtype='float32')
-            dc = np.ones((N, H), dtype='float32')
+            dh = np.ones((N, H), dtype='f')
+            dc = np.ones((N, H), dtype='f')
 
-        #dhs = np.empty((N, len(self.layers), H//4), dtype='float32')
-        #dcs = np.empty((N, len(self.layers), H//4), dtype='float32')
-        dxs = np.empty((N, len(self.layers), D), dtype='float32')
-        dWx = np.zeros((D, H*4), dtype='float32')
-        dWh = np.zeros((H, H*4), dtype='float32')
-        db = np.zeros((H*4), dtype='float32')
+        #dhs = np.empty((N, len(self.layers), H//4), dtype='f')
+        #dcs = np.empty((N, len(self.layers), H//4), dtype='f')
+        dxs = np.empty((N, len(self.layers), D), dtype='f')
+        dWx = np.zeros((D, H*4), dtype='f')
+        dWh = np.zeros((H, H*4), dtype='f')
+        db = np.zeros((H*4), dtype='f')
         for t, layer in enumerate(reversed(self.layers)):
             dh = dhs[:, -1-t, :] + dh
             dx, dh, dc = layer.backward(dh, dc)
@@ -259,7 +259,7 @@ class TimeEmbedding:
         V, D = W.shape
         N, T = xs.shape
 
-        wordvecs = np.zeros((N, T, D), dtype='float32')
+        wordvecs = np.zeros((N, T, D), dtype='f')
         for t in range(T):
             #print(xs[:, t])
             a = W[xs[:, t], :]
@@ -278,7 +278,7 @@ class TimeEmbedding:
         N, T = xs.shape
         V, D = W.shape
         
-        dWs = np.zeros((V, D), dtype='float32')
+        dWs = np.zeros((V, D), dtype='f')
         for t in range(T):
             #print(xs[:, t])
             dWs[xs[:, t], :] += dW[:, t, :]
@@ -292,8 +292,8 @@ class LSTM:
         self.grads = [np.zeros_like(Wx), np.zeros_like(Wh), np.zeros_like(b)]
         self.cache = []
         H, _ = Wh.shape
-        #prev_h = np.zeros((H, H), dtype='float32')
-        #prev_c = np.zeros((H, H), dtype='float32')
+        #prev_h = np.zeros((H, H), dtype='f')
+        #prev_c = np.zeros((H, H), dtype='f')
 
     
     def forward(self, x, prev_h, prev_c):
@@ -363,18 +363,18 @@ class TimeLSTM:
         H = H//4
         N, T = batch_size, time_size
     
-        self.dh = np.ones((N, H), dtype='float32')
-        self.dc = np.ones((N, H), dtype='float32')
+        self.dh = np.ones((N, H), dtype='f')
+        self.dc = np.ones((N, H), dtype='f')
 
     def forward(self, xs):
         Wx, Wh, b = self.params
         N, T, D = xs.shape
         H, _ = Wh.shape
 
-        prev_h = np.zeros((N, H), dtype='float32')
-        prev_c = np.zeros((N, H), dtype='float32')
-        hs = np.zeros((N, T, H), dtype='float32')
-        cs = np.zeros((N, T, H), dtype='float32')  
+        prev_h = np.zeros((N, H), dtype='f')
+        prev_c = np.zeros((N, H), dtype='f')
+        hs = np.zeros((N, T, H), dtype='f')
+        cs = np.zeros((N, T, H), dtype='f')  
         
         self.layers = []
         
@@ -397,15 +397,15 @@ class TimeLSTM:
             dh = self.dh
             dc = self.dc
         else:
-            dh = np.ones((N, H), dtype='float32')
-            dc = np.ones((N, H), dtype='float32')
+            dh = np.ones((N, H), dtype='f')
+            dc = np.ones((N, H), dtype='f')
 
-        #dhs = np.empty((N, len(self.layers), H//4), dtype='float32')
-        #dcs = np.empty((N, len(self.layers), H//4), dtype='float32')
-        dxs = np.empty((N, len(self.layers), D), dtype='float32')
-        dWx = np.zeros((D, H*4), dtype='float32')
-        dWh = np.zeros((H, H*4), dtype='float32')
-        db = np.zeros((H*4), dtype='float32')
+        #dhs = np.empty((N, len(self.layers), H//4), dtype='f')
+        #dcs = np.empty((N, len(self.layers), H//4), dtype='f')
+        dxs = np.empty((N, len(self.layers), D), dtype='f')
+        dWx = np.zeros((D, H*4), dtype='f')
+        dWh = np.zeros((H, H*4), dtype='f')
+        db = np.zeros((H*4), dtype='f')
         for t, layer in enumerate(reversed(self.layers)):
             dh = dhs[:, -1-t, :] + dh
             dx, dh, dc = layer.backward(dh, dc)
@@ -483,7 +483,7 @@ class TimeSoftmaxWithLoss:
         
         #temp = temp.reshape(-1, V)
         #tempAll = tempAll.reshape(N, T, 1) 
-        #ys = np.empty((N, T, V), dtype='float32')
+        #ys = np.empty((N, T, V), dtype='f')
         #for i in range(N*T):
         ys = exp/sum_exp[..., None]  # 
 
@@ -512,7 +512,7 @@ class TimeSoftmaxWithLoss:
         
         #temp = temp.reshape(-1, V)
         #tempAll = tempAll.reshape(N, T, 1) 
-        #ys = np.empty((N, T, V), dtype='float32')
+        #ys = np.empty((N, T, V), dtype='f')
         #for i in range(N*T):
         ys = exp/sum_exp[..., None]  # 
 

@@ -23,14 +23,14 @@ class Lm:
         self.layers = [
             TimeEmbedding(embed_W),
             TimeDropout(),
-            TimeLSTM(LSTM_Wx0, LSTM_Wh0, LSTM_b, batch_size, time_size),
+            TimeLSTM(LSTM_Wx0, LSTM_Wh0, LSTM_b),
             TimeDropout(),
-            TimeLSTM(LSTM_Wx1, LSTM_Wh1, LSTM_b, batch_size, time_size),
+            TimeLSTM(LSTM_Wx1, LSTM_Wh1, LSTM_b),
             TimeDropout(),
             #TimeAffine(Affine_W, Affine_b),
             TimeAffine(embed_W.T, Affine_b)
         ]
-        self.lossLayer = TimeSoftmaxWithLoss(vocab_size)
+        self.lossLayer = TimeSoftmaxWithLoss()
 
         self.params = []
         self.grads = []
@@ -52,3 +52,6 @@ class Lm:
             dout = layer.backward(dout)
         return dout
 
+    def reset_state(self):
+        for layer in self.lstm_layers:
+            layer.reset_state()

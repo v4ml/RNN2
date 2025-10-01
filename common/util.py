@@ -123,7 +123,7 @@ def ppmi(C, verbose=False, eps=1e-8):
     :param verbose: 진행 상황을 출력할지 여부
     :return: ppmi
     '''
-    M = np.zeros_like(C, dtype=np.float32)
+    M = np.zeros_like(C, dtype=np.f)
     N = np.sum(C)  # num of corpus
     S = np.sum(C, axis=0)  # 각 단어의 출현 횟수
     total = C.shape[0] * C.shape[1]

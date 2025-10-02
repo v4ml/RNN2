@@ -158,7 +158,8 @@ class TimeLSTM:
         self.grads = [np.zeros_like(Wx), np.zeros_like(Wh), np.zeros_like(b)]
         self.stateful = stateful
 
-    
+        self.h = None
+        self.c = None
         self.dh = None
         self.dc = None
 
@@ -167,8 +168,11 @@ class TimeLSTM:
         N, T, D = xs.shape
         H, _ = Wh.shape
 
-        prev_h = np.zeros((N, H), dtype='f')
-        prev_c = np.zeros((N, H), dtype='f')
+        if self.h is None:
+            self.h = np.zeros((N, H), dtype='f')
+            self.c = np.zeros((N, H), dtype='f')
+        prev_h = self.h#np.zeros((N, H), dtype='f')
+        prev_c = self.c#np.zeros((N, H), dtype='f')
         hs = np.zeros((N, T, H), dtype='f')
         cs = np.zeros((N, T, H), dtype='f')  
         
@@ -176,10 +180,10 @@ class TimeLSTM:
         
         for t in range(T):
             layer = LSTM(Wx, Wh, b)
-            prev_h, prev_c = layer.forward(xs[:, t, :], prev_h, prev_c)
+            self.h, self.c = layer.forward(xs[:, t, :], self.h, self.c)
             self.layers.append(layer)
-            hs[:, t, :] = prev_h
-            cs[:, t, :] = prev_c
+            hs[:, t, :] = self.h
+            cs[:, t, :] = self.c
 
         return hs # N, T, H
     
@@ -227,7 +231,8 @@ class TimeLSTM:
     def set_c(self, c):
         self.c = c
 
-
+    def reset_state(self):
+        self.h, self.c = None, None
 
 class TimeAffine:
     def __init__(self, Wh, b):

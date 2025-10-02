@@ -38,8 +38,8 @@ vocab_size = len(word_to_id)
 xs = corpus[:-1]
 ts = corpus[1:]
 
-model = BetterRnnlm(vocab_size, wordvec_size, hidden_size, dropout)
-#model = Lm(vocab_size, wordvec_size, hidden_size, batch_size, time_size)
+#model = BetterRnnlm(vocab_size, wordvec_size, hidden_size, dropout)
+model = Lm(vocab_size, wordvec_size, hidden_size, dropout)
 optimizer = SGD(lr)
 trainer = RnnlmTrainer(model, optimizer)
 

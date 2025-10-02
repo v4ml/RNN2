@@ -16,11 +16,26 @@ from common.trainer import RnnlmTrainer
 
 
 corpus, word_to_id, id_to_word = ptb.load_data('train')
+corpus_val, _, _ = ptb.load_data('val')
+corpus_test, _, _ = ptb.load_data('test')
 corpus_test, word_to_id_test, id_to_word_test = ptb.load_data('test')
 
-#corpus = corpus[:1001]
+corpus = np.array(corpus)
 vocab_size = len(word_to_id) 
-#vocab_size = int(max(corpus))+1
+corpus = corpus[0:1001]
+vocab_size = int(max(corpus))+1
+corpus_val = np.array(corpus_val)
+corpus_test = np.array(corpus_test)
+
+xs = corpus[:-1]
+#xs = np.array(xs)
+# xs = xs.reshape(batch_size, -1)
+ts = corpus[1:]
+#ts = np.array(ts)
+# ts = ts.reshape(batch_size, time_size)
+
+#corpus = corpus[:1001]
+
 batch_size = 20
 wordvec_size = 650
 hidden_size = 650
@@ -29,6 +44,17 @@ lr = 20.0
 max_epoch = 40
 max_grad = 0.25
 dropout = 0.5
+eval_interval = 20
+
+batch_size = 10
+wordvec_size = 15
+hidden_size = 15
+time_size = 5
+lr = 20.0
+max_epoch = 10
+max_grad = 0.25
+dropout = 0.5
+eval_interval = 5
 
 
 # vocab_size = len(word_to_id) 
@@ -50,19 +76,31 @@ dropout = 0.5
 
 
 
-corpus = np.array(corpus)
-xs = corpus[:-1]
-#xs = np.array(xs)
-# xs = xs.reshape(batch_size, -1)
-ts = corpus[1:]
-#ts = np.array(ts)
-# ts = ts.reshape(batch_size, time_size)
-#model = Lm(vocab_size, wordvec_size, hidden_size, batch_size, time_size)
-model = BetterRnnlm(vocab_size, wordvec_size, hidden_size, dropout)
+
+model = Lm(vocab_size, wordvec_size, hidden_size, dropout)
+#model = BetterRnnlm(vocab_size, wordvec_size, hidden_size, dropout)
 optimizer = SGD(lr)
-#trainer = Trainer(model, optimizer, xs, ts, batch_size, time_size, max_epoch)
-trainer = RnnlmTrainer(model, optimizer)
-trainer.fit(xs, ts, max_epoch, batch_size, time_size, max_grad)
+trainer = Trainer(model, optimizer, xs, ts, batch_size, time_size, max_epoch)
+#trainer = RnnlmTrainer(model, optimizer)
+#trainer.fit(xs, ts, max_epoch, batch_size, time_size, max_grad)
+best_ppl = float('inf')
+for epoch in range(max_epoch): 
+    trainer.fit(xs, ts, max_epoch=1, batch_size=batch_size,
+                time_size=time_size, max_grad=max_grad, eval_interval=eval_interval)
+
+    model.reset_state()
+    ppl = trainer.eval_perplexity(model, corpus_val)
+    print('검증 퍼플렉서티: ', ppl)
+
+    if best_ppl > ppl:
+        best_ppl = ppl
+        model.save_params()
+    else:
+        lr /= 4.0
+        optimizer.lr = lr
+
+    model.reset_state()
+    print('-' * 50)
 
 # model.forward(xs, ts)
 # dxs = np.ones((20, 5, wordvec_size), dtype='f')

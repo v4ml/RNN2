@@ -20,8 +20,9 @@ class Trainer:
         jump = data_size // batch_size
         self.offset = [i*jump for i in range(batch_size)]
         self.max_epoch = max_epoch
+        self.current_epoch = 0
 
-    def get_batch(self, xs, ys, start_idx, batch_size, time_size):
+    def get_batch(self, xs, ys, batch_size, time_size):
         start_idx = np.random.randint(0, 1000)
         batch_x = np.empty((batch_size, time_size), dtype='i')
         batch_y = np.empty((batch_size, time_size), dtype='i')
@@ -53,9 +54,9 @@ class Trainer:
         self.ppl_list = []
 
         start_time = time.time()
-        for epoch in range(self.max_epoch):
+        for epoch in range(max_epoch):
             for iters in range(max_iters):
-                batch_x, batch_y = self.get_batch(xs, ts, start_idx, batch_size, time_size)
+                batch_x, batch_y = self.get_batch(xs, ts, batch_size, time_size)
                 loss = self.model.forward(batch_x, batch_y)
                 self.model.backward()
                 params, grads = self.remove_duplicate(self.model.params, self.model.grads)
@@ -67,14 +68,52 @@ class Trainer:
                 loss_count += 1
             
                 # 퍼플렉서티 평가
+                if (eval_interval is not None) and ((iters) % eval_interval) == 0:
+                    ppl = np.exp(total_loss / loss_count)
+                    elapsed_time = time.time() - start_time
+                    print('| 에폭 %d |  반복 %d / %d | 시간 %d[s] | 퍼플렉서티 %.2f'
+                          % (self.current_epoch + 1, iters + 1, max_iters, elapsed_time, ppl))
+                    self.ppl_list.append(float(ppl))
+                    total_loss, loss_count = 0, 0         
+            self.current_epoch += 1
+            
+    def fit_org(self, xs, ts, max_epoch=10, batch_size=20, time_size=35,
+            max_grad=None, eval_interval=20):
+        data_size = len(xs)
+        max_iters = data_size // (batch_size * time_size)
+        self.time_idx = 0
+        self.ppl_list = []
+        self.eval_interval = eval_interval
+        model, optimizer = self.model, self.optimizer
+        total_loss = 0
+        loss_count = 0
+
+        start_time = time.time()
+        for epoch in range(max_epoch):
+            for iters in range(max_iters):
+                batch_x, batch_t = self.get_batch(xs, ts, batch_size, time_size)
+
+                # 기울기를 구해 매개변수 갱신
+                loss = model.forward(batch_x, batch_t)
+                model.backward()
+                params, grads = self.remove_duplicate(model.params, model.grads)  # 공유된 가중치를 하나로 모음
+                #params, grads = model.params, model.grads
+                if max_grad is not None:
+                    self.clip_grads(grads, max_grad)
+                optimizer.update(params, grads)
+                total_loss += loss
+                loss_count += 1
+
+                # 퍼플렉서티 평가
                 if (eval_interval is not None) and (iters % eval_interval) == 0:
                     ppl = np.exp(total_loss / loss_count)
                     elapsed_time = time.time() - start_time
                     print('| 에폭 %d |  반복 %d / %d | 시간 %d[s] | 퍼플렉서티 %.2f'
-                          % (epoch + 1, iters + 1, max_iters, elapsed_time, ppl))
+                          % (self.current_epoch + 1, iters + 1, max_iters, elapsed_time, ppl))
                     self.ppl_list.append(float(ppl))
-                    total_loss, loss_count = 0, 0         
-            
+                    total_loss, loss_count = 0, 0
+
+            self.current_epoch += 1
 
     def plot(self, ylim=None):
         x = np.arange(len(self.ppl_list))
@@ -131,3 +170,33 @@ class Trainer:
             if not find_flg: break
 
         return params, grads
+    
+    def eval_perplexity(self, model, corpus, batch_size=10, time_size=35):
+        print('퍼플렉서티 평가 중 ...')
+        corpus_size = len(corpus)
+        total_loss, loss_cnt = 0, 0
+        max_iters = (corpus_size - 1) // (batch_size * time_size)
+        jump = (corpus_size - 1) // batch_size
+
+        for iters in range(max_iters):
+            xs = np.zeros((batch_size, time_size), dtype=np.int32)
+            ts = np.zeros((batch_size, time_size), dtype=np.int32)
+            time_offset = iters * time_size
+            offsets = [time_offset + (i * jump) for i in range(batch_size)]
+            for t in range(time_size):
+                for i, offset in enumerate(offsets):
+                    xs[i, t] = corpus[(offset + t) % corpus_size]
+                    ts[i, t] = corpus[(offset + t + 1) % corpus_size]
+
+            try:
+                loss = model.forward(xs, ts, train_flg=False)
+            except TypeError:
+                loss = model.forward(xs, ts)
+            total_loss += loss
+
+            sys.stdout.write('\r%d / %d' % (iters, max_iters))
+            sys.stdout.flush()
+
+        print('')
+        ppl = np.exp(total_loss / max_iters)
+        return ppl    

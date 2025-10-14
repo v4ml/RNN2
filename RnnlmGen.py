@@ -1,7 +1,10 @@
 from lm import Lm
+from better_rnnlm import BetterRnnlm
 from common.np import *
-
-class LmGen(Lm):
+from dataset import ptb
+ 
+#class LmGen(Lm):
+class LmGen(BetterRnnlm):
     def generate(self, start_id, skip_ids=None, sample_size=100):
         # word_ids = [start_id]
 
@@ -18,7 +21,8 @@ class LmGen(Lm):
             score = self.predict(x)
             p = self.softmax(score.flatten())
 
-            sampled = np.random.choice(len(p), size=1, p=p)
+            sampled = np.argmax(p)
+            #sampled = np.random.choice(len(p), size=1, p=p)[0]
             if (skip_ids is None) or (sampled not in skip_ids):
                 x = sampled
                 word_ids.append(int(x))
@@ -46,7 +50,24 @@ max_grad = 0.25
 dropout = 0.5
 eval_interval = 20
 
+corpus, word_to_id, id_to_word = ptb.load_data('train')
+
+
 #lm = Lm(vocab_size=10000, wordvec_size=wordvec_size, hidden_size=hidden_size, dropout_ratio=dropout)
 lmGen = LmGen(vocab_size=10000, wordvec_size=wordvec_size, hidden_size=hidden_size, dropout_ratio=dropout)
 lmGen.load_params('./BetterRnnlm.pkl')
-lmGen.generate(np.array([[10]]))
+
+start_word = 'you'
+start_id = word_to_id[start_word]
+skip_words = ['N', '<unk>', '$']
+skip_ids = [word_to_id[w] for w in skip_words]
+
+
+word_ids = lmGen.generate(start_id, skip_ids)
+txt = ' '.join([id_to_word[i] for i in word_ids] )
+txt = txt.replace('<eos>', '.\n')
+
+print(txt)
+
+#for i, elem in enumerate(word_ids):
+#   print(id_to_word[elem], end=" ")

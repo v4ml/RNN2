@@ -168,9 +168,10 @@ class TimeLSTM:
         N, T, D = xs.shape
         H, _ = Wh.shape
 
-        if self.h is None:
+        if not self.stateful or self.h is None:
             self.h = np.zeros((N, H), dtype='f')
-            self.c = np.zeros((N, H), dtype='f')
+        if not self.stateful or self.c is None:
+            self.c = np.zeros((N, H), dtype='f')            
         prev_h = self.h#np.zeros((N, H), dtype='f')
         prev_c = self.c#np.zeros((N, H), dtype='f')
         hs = np.zeros((N, T, H), dtype='f')
@@ -226,10 +227,11 @@ class TimeLSTM:
 
         return dxs
 
-    def set_h(self, h):
+    def set_state(self, h):
         self.h = h
-    def set_c(self, c):
-        self.c = c
+    
+    #def set_c(self, c):
+    #    self.c = c
 
     def reset_state(self):
         self.h, self.c = None, None

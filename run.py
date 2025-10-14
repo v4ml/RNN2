@@ -22,8 +22,8 @@ corpus_test, word_to_id_test, id_to_word_test = ptb.load_data('test')
 
 corpus = np.array(corpus)
 vocab_size = len(word_to_id) 
-corpus = corpus[0:1001]
-vocab_size = int(max(corpus))+1
+#corpus = corpus[0:1001]
+#vocab_size = int(max(corpus))+1
 corpus_val = np.array(corpus_val)
 corpus_test = np.array(corpus_test)
 
@@ -46,15 +46,15 @@ max_grad = 0.25
 dropout = 0.5
 eval_interval = 20
 
-batch_size = 10
-wordvec_size = 15
-hidden_size = 15
-time_size = 5
-lr = 20.0
-max_epoch = 10
-max_grad = 0.25
-dropout = 0.5
-eval_interval = 5
+#batch_size = 10
+#wordvec_size = 15
+#hidden_size = 15
+#time_size = 5
+#lr = 20.0
+#max_epoch = 10
+#max_grad = 0.25
+#dropout = 0.5
+#eval_interval = 5
 
 
 # vocab_size = len(word_to_id) 
@@ -78,11 +78,16 @@ eval_interval = 5
 
 
 model = Lm(vocab_size, wordvec_size, hidden_size, dropout)
+model.load_params('./BetterRnnlm.pkl')
 #model = BetterRnnlm(vocab_size, wordvec_size, hidden_size, dropout)
 optimizer = SGD(lr)
 trainer = Trainer(model, optimizer, xs, ts, batch_size, time_size, max_epoch)
 #trainer = RnnlmTrainer(model, optimizer)
 #trainer.fit(xs, ts, max_epoch, batch_size, time_size, max_grad)
+
+#ppl = trainer.eval_perplexity(model, corpus_val)
+#print('검증 퍼플렉서티: ', ppl)
+
 best_ppl = float('inf')
 for epoch in range(max_epoch): 
     trainer.fit(xs, ts, max_epoch=1, batch_size=batch_size,

@@ -7,7 +7,7 @@ from layer_new import *
 from common.base_model import BaseModel
 
 class Lm(BaseModel):
-    def __init__(self, vocab_size, wordvec_size, hidden_size, dropout_ratio):
+    def __init__(self, vocab_size, wordvec_size, hidden_size, dropout_ratio=0.5):
 
 
         V, D, H = vocab_size, wordvec_size, hidden_size
@@ -28,13 +28,14 @@ class Lm(BaseModel):
             TimeDropout(dropout_ratio),
             TimeLSTM(LSTM_Wx0, LSTM_Wh0, LSTM_b0),
             TimeDropout(dropout_ratio),
-            TimeLSTM(LSTM_Wx1, LSTM_Wh1, LSTM_b1),
-            TimeDropout(dropout_ratio),
+            #TimeLSTM(LSTM_Wx1, LSTM_Wh1, LSTM_b1),
+            #TimeDropout(dropout_ratio),
             #TimeAffine(Affine_W, Affine_b),
             TimeAffine(embed_W.T, Affine_b)
         ]
         self.lossLayer = TimeSoftmaxWithLoss()
-        self.lstm_layers = [self.layers[2], self.layers[4]]
+        #self.lstm_layers = [self.layers[2], self.layers[4]]
+        self.lstm_layers = [self.layers[2]]
 
         self.params = []
         self.grads = []

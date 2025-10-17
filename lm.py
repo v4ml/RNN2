@@ -30,7 +30,7 @@ class Lm(BaseModel):
             TimeDropout(dropout_ratio),
             #TimeLSTM(LSTM_Wx1, LSTM_Wh1, LSTM_b1),
             #TimeDropout(dropout_ratio),
-            #TimeAffine(Affine_W, Affine_b),
+            #TimeAffine(Affine_W, Affine_b)
             TimeAffine(embed_W.T, Affine_b)
         ]
         self.lossLayer = TimeSoftmaxWithLoss()
@@ -44,7 +44,9 @@ class Lm(BaseModel):
             self.grads += layer.grads
 
     def forward(self, xs, ts):
-        xs = self.predict(xs)
+        for layer in self.layers:
+            xs = layer.forward(xs)
+        #xs = self.predict(xs)6
         loss = self.lossLayer.forward(xs, ts)
 
         return loss

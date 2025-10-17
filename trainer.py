@@ -57,7 +57,7 @@ class Trainer:
         for epoch in range(max_epoch):
             for iters in range(max_iters):
                 batch_x, batch_y = self.get_batch(xs, ts, batch_size, time_size)
-                loss = self.model.forward(batch_x, batch_y)
+                loss = self.model.forward(batch_y, batch_y)
                 self.model.backward()
                 params, grads = self.remove_duplicate(self.model.params, self.model.grads)
 
@@ -200,3 +200,4 @@ class Trainer:
         print('')
         ppl = np.exp(total_loss / max_iters)
         return ppl    
+        

@@ -13,6 +13,7 @@ config.GPU = True
 
 from lm import Lm
 from common.optimizer import SGD
+from common.optimizer import Adam
 from common.trainer import RnnlmTrainer
 from seq2seqTrainer import Seq2SeqTrainer
 import pickle
@@ -57,16 +58,17 @@ char_to_id, id_to_char = sequence.get_vocab()
 
 in_vocab_size = x_train.shape[1]
 out_vocab_size = t_train.shape[1]
-wordvec_size = 50
-hidden_size = 50
+vocab_size = len(char_to_id)
+wordvec_size = 16
+hidden_size = 128
 dropout = 0.5
 max_epoch = 40
-max_grad = 0.25
+max_grad = 5.0
 lr = 20.0
 batch_size = x_train.shape[0]
+length = t_train.shape[1]
 
-
-seq2seq = Seq2seq(batch_size, in_vocab_size, out_vocab_size, wordvec_size, hidden_size)
+seq2seq = Seq2seq(batch_size, vocab_size, wordvec_size, hidden_size, length, char_to_id, id_to_char)
 # seq2seq.forward(x_train, t_train)
 # seq2seq.backward()
 

@@ -278,7 +278,7 @@ class TimeAffine:
     
     def backward(self, dout):
         x = self.x
-        N, T, D = x.shape
+        N, T, D = dout.shape
         W, b = self.params
         
         dout = dout.reshape(N*T, -1)

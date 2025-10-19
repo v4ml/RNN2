@@ -34,7 +34,7 @@ class Lm(BaseModel):
             TimeAffine(Affine_W, Affine_b)
             #TimeAffine(embed_W.T, Affine_b)
         ]
-        self.lossLayer = TimeSoftmaxWithLoss()
+        #self.lossLayer = TimeSoftmaxWithLoss()
         #self.lstm_layers = [self.layers[2], self.layers[4]]
         self.lstm_layers = [self.layers[1]]
 
@@ -44,14 +44,14 @@ class Lm(BaseModel):
             self.params += layer.params
             self.grads += layer.grads
 
-    def forward(self, xs, ts):
+    def forward(self, xs):
         for layer in self.layers:
             xs = layer.forward(xs)
             
         #xs = self.predict(xs)6
-        loss = self.lossLayer.forward(xs, ts)
+        #loss = self.lossLayer.forward(xs, ts)
 
-        return loss
+        return xs
     
     def predict(self, xs):
         for layer in self.layers:
@@ -59,7 +59,7 @@ class Lm(BaseModel):
         return xs
 
     def backward(self, dout=1):
-        dout = self.lossLayer.backward(dout)
+        #dout = self.lossLayer.backward(dout)
         for layer in reversed(self.layers):
             dout = layer.backward(dout)
         return dout

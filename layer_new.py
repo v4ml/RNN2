@@ -303,7 +303,7 @@ class TimeSoftmaxWithLoss:
         #     targets[:, t] = idx
         return loss # N, T
 
-    def backward(self, dloss=-1):
+    def backward(self, dloss=1):
         ys, ts, N, T = self.cache
         dloss = ys.copy()
         dloss[np.arange(N)[:, None], np.arange(T), ts] -= 1

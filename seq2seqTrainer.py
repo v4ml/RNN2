@@ -29,7 +29,7 @@ class Seq2SeqTrainer:
     def fit(self, xs, ts, max_epoch=10, batch_size=20, time_size=35,
             max_grad=None, eval_interval=20):
         data_size = len(xs)
-        max_iters = 1#data_size // (batch_size * time_size)
+        max_iters = data_size // (batch_size * time_size)
         self.time_idx = 0
         self.ppl_list = []
         self.eval_interval = eval_interval
@@ -74,7 +74,6 @@ class Seq2SeqTrainer:
         plt.xlabel('반복 (x' + str(self.eval_interval) + ')')
         plt.ylabel('퍼플렉서티')
         plt.show()
-        #input("Press Enter to continue...")
 
 
     def clip_grads(self, grads, max_norm):

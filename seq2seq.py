@@ -19,48 +19,68 @@ import os
 
 
 class Seq2seq:
-    def __init__(self, batch_size, vocab_size, wordvec_siez, hidden_size, length, char_to_id, id_to_char):
-        self.encoder = Encoder(vocab_size, wordvec_siez, hidden_size)
-        self.decoder = Decoder(batch_size, vocab_size, wordvec_siez, hidden_size)
+    def __init__(self, vocab_size, wordvec_size, hidden_size):
+        self.encoder = Encoder(vocab_size, wordvec_size, hidden_size)
+        self.decoder = Decoder(vocab_size, wordvec_size, hidden_size)
         self.params, self.grads = [], []
         self.params += self.encoder.params + self.decoder.params
         self.grads += self.encoder.grads + self.decoder.grads
-        self.id_to_char = id_to_char
-        self.char_to_id = char_to_id
         self.loss_layer = TimeSoftmaxWithLoss()
-        self.length = length
+        self.length = 5
+        self.wordvec_size = wordvec_size
+        self.h = None
 
-    def predict(self, xs):
-        h = self.encoder.forward(xs) # encoder의 lstm_layers에서 array로 h 리턴
-        ts = self.decoder.predict(h, self.length)
-        # encoder에서 받은 h를 decoder에 설정
-        # for i, layer in enumerate(self.decoder.lstm_layers):
-        #     layer.set_state(h[i])
-        result = np.argmax(ts, axis=2)
-        #for i in range(ts.shape[0]):
-        #    for k, input in enumerate(result[i]):
-        #        print(self.id_to_char[input], end = '')
+    # def predict(self,  xs):
+    #     h = self.encoder.forward(xs) # encoder의 lstm_layers에서 array로 h 리턴
+    #     ts = self.decoder.predict(h, self.length)
+    #     # encoder에서 받은 h를 decoder에 설정
+    #     # for i, layer in enumerate(self.decoder.lstm_layers):
+    #     #     layer.set_state(h[i])
+    #     result = np.argmax(ts, axis=2)
+    #     #for i in range(ts.shape[0]):
+    #     #    for k, input in enumerate(result[i]):
+    #     #        print(self.id_to_char[input], end = ''6
         
-        return ts
+    #     return ts
         
 
     def forward(self, xs, ts):
-        h = self.encoder.forward(xs) #self.predict(xs)
-        wordvecs = self.decoder.predict(h, self.length)
-        
-        loss = self.loss_layer.forward(wordvecs, ts)
+        self.h = self.encoder.forward(xs) #self.predict(xs)
+        wordvecs = self.decoder.forward(self.h, ts)
+        ts = np.array(ts)
+        tts = np.full(ts.shape, 5, dtype='int')
+        tts[:, 0:self.length-1] = ts[:, 1:self.length]
+        loss = self.loss_layer.forward(wordvecs, tts)
 
         return loss
 
     def backward(self, dout=1):
         dout = self.loss_layer.backward(dout)
         self.decoder.backward(dout)
-        dh = np.zeros((45000, 7, 128), dtype='f')
-        dh[:, -1, :] = self.decoder.lstm_layers[0].dh
+        
+        #dh[:, 6, :] = 
         #for layer in self.decoder.lstm_layers:
         #    self.encoder.backward( layer.dh )
-        self.encoder.backward(dh)
+        self.encoder.backward(self.decoder.lstm_layers[0].dh)
         pass
+ 
+    def generate(self, xs, t, sample_size):
+        self.reset_state()
+        N, _ = xs.shape
+        #print(xs[0,0])
+        #wordvecs = np.full((N, sample_size), x[0, 0], dtype='f')
+        t = np.full((N, sample_size), 6, dtype='int')
+        wordvecs = np.empty((N, sample_size, 13), dtype='f')
+        h = self.encoder.forward(xs)
+        for i in range(sample_size-1):
+            wordvecs[:, i, :] = self.decoder.forward(h, t[:, i].reshape(N, 1)).reshape(N, 13)
+        wordvecs = np.argmax(wordvecs, axis=2)
+        wordvecs = wordvecs[0]
+        return wordvecs
+
+        
+
+
 
     def reset_state(self):
         self.encoder.reset_state()
@@ -125,11 +145,14 @@ class Encoder:
         self.lstm_layers = [self.layers[1]]
 
         self.params, self.grads = [], []
+        for layer in self.layers:
+            self.params += layer.params
+            self.grads += layer.grads
+        pass
 
     def forward(self, xs):
         for layer in self.layers:
             xs = layer.forward(xs)
-            self.params += layer.params
         
         h = []
         for i, layer in enumerate(self.lstm_layers):
@@ -137,10 +160,15 @@ class Encoder:
 
         return h
 
-    def backward(self, dout):
-        for layer in reversed(self.layers):
-            dout = layer.backward(dout)
-            self.grads += layer.grads
+    def backward(self, dh):
+        # for layer in reversed(self.layers):
+        #     dout = layer.backward(dout)
+        N, H = dh.shape
+        dhs = np.zeros((N, 7, H), dtype='f')     
+        dhs[:, -1, :] = dh
+        dout = self.layers[1].backward(dhs)
+        dout = self.layers[0].backward(dout)
+        
         return dout
     
     def reset_state(self):
@@ -148,10 +176,10 @@ class Encoder:
             layer.reset_state()    
 
 class Decoder(Lm):
-    def __init__(self, batch_size, vocab_size, wordvec_size, hidden_size):
+    def __init__(self, vocab_size, wordvec_size, hidden_size):
         super().__init__(vocab_size, wordvec_size, hidden_size)
-        self.cache = [batch_size, vocab_size, wordvec_size]
-        #self.params, self.grads = [], []
+        self.cache = [vocab_size, wordvec_size]
+
         #self.params.extend(super().params)
         #self.grads.extend(super().grads)
         
@@ -174,12 +202,12 @@ class Decoder(Lm):
         for i, layer in enumerate(self.lstm_layers): # encoder의 결과 h를 decoder에 입력
             layer.set_state(h[i])
 
-        N, V = xs.shape    
-        xs = np.array(xs)
+        # N, V = xs.shape
+        # xs = np.array(xs)
         #ts = np.full(xs.shape, 5, dtype='int')
         #ts[:, :V-1] = xs[:, 1:V]
-        #loss = super().forward(xs, ts)
-        return xs
+        dout = super().forward(xs)
+        return dout
 
     def backward(self, dout=1):
         dout = super().backward(dout)

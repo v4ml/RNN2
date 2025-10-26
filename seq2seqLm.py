@@ -3,8 +3,8 @@ sys.path.append('..')
 from common.np import *
 from common.layers import *
 #from layer import *
-#from layer_new import *
-from common.time_layers import *
+from layer_new import *
+#from common.time_layers import *
 from common.base_model import BaseModel
 
 class Lm(BaseModel):
@@ -43,6 +43,7 @@ class Lm(BaseModel):
         for layer in self.layers:
             self.params += layer.params
             self.grads += layer.grads
+        pass
 
     def forward(self, xs):
         for layer in self.layers:

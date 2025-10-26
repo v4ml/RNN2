@@ -313,6 +313,7 @@ class TimeSoftmaxWithLoss:
         xs = xs.reshape(N * T, V)
         ts = ts.reshape(N * T)
         mask = mask.reshape(N * T)
+        mask = np.array(mask)
         #xs = xs - np.max(xs, axis=1, keepdims=True)
         ys = softmax(xs)
         ls = np.log(ys[np.arange(N * T), ts])

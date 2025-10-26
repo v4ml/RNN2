@@ -7,7 +7,8 @@ from dataset import sequence
 from common.optimizer import Adam
 from common.trainer import Trainer
 from common.util import eval_seq2seq
-from seq2seq import Seq2seq
+#from seq2seq import Seq2seq
+from seq2seq_ import Seq2seq
 #from peeky_seq2seq import PeekySeq2seq
 
 
@@ -38,9 +39,12 @@ trainer = Trainer(model, optimizer)
 
 acc_list = []
 for epoch in range(max_epoch):
+    model.encoder.reset_state()
+    model.decoder.reset_state()    
     trainer.fit(x_train, t_train, max_epoch=1,
                 batch_size=batch_size, max_grad=max_grad)
-    model.reset_state()
+    model.encoder.reset_state()
+    model.decoder.reset_state()
     correct_num = 0
     for i in range(len(x_test)):
         question, correct = x_test[[i]], t_test[[i]]
@@ -50,6 +54,7 @@ for epoch in range(max_epoch):
 
     acc = float(correct_num) / len(x_test)
     acc_list.append(acc)
+    #model.reset_state()
     print('검증 정확도 %.3f%%' % (acc * 100))
 
 # 그래프 그리기
